@@ -16,10 +16,6 @@ TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostPagesTests(TestCase):
-    post_text = 'Тестовый текст'
-    post_author = 'auth'
-    post_group = 'Тестовая группа'
-    group_description = 'Тестовое описание'
 
     @classmethod
     def setUpClass(cls):
@@ -93,9 +89,9 @@ class PostPagesTests(TestCase):
     def test_home_page_show_correct_context(self):
         response = self.guest_client.get(reverse('posts:index'))
         first_object = response.context['page_obj'][0]
-        self.assertEqual(first_object.text, self.post_text)
-        self.assertEqual(first_object.author.username, self.post_author)
-        self.assertEqual(first_object.group.title, self.post_group)
+        self.assertEqual(first_object.text, 'Тестовый текст')
+        self.assertEqual(first_object.author.username, 'auth')
+        self.assertEqual(first_object.group.title, 'Тестовая группа')
         self.assertTrue(Post.objects.exists(), 'posts/small.gif')
 
     def test_posts_group_list_correct_context(self):
@@ -103,9 +99,9 @@ class PostPagesTests(TestCase):
             reverse('posts:group_list',
                     kwargs={'slug': f'{self.group.slug}'}))
         self.assertEqual(response.context.get('group').title,
-                         self.post_group)
+                         'Тестовая группа')
         self.assertEqual(response.context.get('group').description,
-                         self.group_description)
+                         'Тестовое описание')
         self.assertTrue(Post.objects.exists(), 'posts/small.gif')
 
     def test_profile_correct_context(self):
@@ -114,7 +110,7 @@ class PostPagesTests(TestCase):
                     kwargs={'username': f'{self.user.username}'})
         )
         self.assertEqual(response.context.get('author').username,
-                         self.post_author)
+                         'auth')
         self.assertTrue(Post.objects.exists(), 'posts/small.gif')
 
     def test_post_detail_correct_context(self):
@@ -122,7 +118,7 @@ class PostPagesTests(TestCase):
             reverse('posts:post_detail',
                     kwargs={'post_id': self.post_user.pk}))
         self.assertEqual(response.context.get('post').text,
-                         self.post_text)
+                         'Тестовый текст')
         self.assertTrue(Post.objects.exists(), 'posts/small.gif')
 
     def test_create_page_show_correct_context(self):
@@ -164,39 +160,36 @@ class PaginatorViewsTest(TestCase):
 
     def test_first_home_page_contains_ten_records(self):
         response = self.authorized_client.get(reverse('posts:index'))
-        self.assertEqual(len(response.context['page_obj']), self.TEN_POSTS)
+        self.assertEqual(len(response.context['page_obj']), 10)
 
     def test_second_home_page_contains_three_records(self):
         response = self.authorized_client.get(
             reverse('posts:index') + '?page=2')
-        self.assertEqual(len(response.context['page_obj']), self.THREE_POSTS)
+        self.assertEqual(len(response.context['page_obj']), 3)
 
     def test_first_group_list_page_contains_ten_records(self):
         response = self.authorized_client.get(
             reverse('posts:group_list', kwargs={'slug': 'test-slug'}))
-        self.assertEqual(len(response.context['page_obj']), self.TEN_POSTS)
+        self.assertEqual(len(response.context['page_obj']), 10)
 
     def test_second_group_list_page_contains_three_records(self):
         response = self.authorized_client.get(
             reverse('posts:group_list',
                     kwargs={'slug': 'test-slug'}) + '?page=2')
-        self.assertEqual(len(response.context['page_obj']), self.THREE_POSTS)
+        self.assertEqual(len(response.context['page_obj']), 3)
 
     def test_first_profile_page_contains_ten_records(self):
         response = self.authorized_client.get(
             reverse('posts:profile', kwargs={'username': 'auth'}))
-        self.assertEqual(len(response.context['page_obj']), self.TEN_POSTS)
+        self.assertEqual(len(response.context['page_obj']), 10)
 
     def test_second_profile_page_contains_ten_records(self):
         response = self.authorized_client.get(
             reverse('posts:profile', kwargs={'username': 'auth'}) + '?page=2')
-        self.assertEqual(len(response.context['page_obj']), self.THREE_POSTS)
+        self.assertEqual(len(response.context['page_obj']), 3)
 
 
 class PostIntegrationViewsTests(TestCase):
-    post_text = 'Тестовый текст'
-    post_group_1 = 'Тестовая группа 1'
-    post_group_2 = 'Тестовая группа 2'
 
     @classmethod
     def setUpClass(cls):
@@ -225,23 +218,22 @@ class PostIntegrationViewsTests(TestCase):
     def test_group_test_of_created_post(self):
         response_index = self.authorized_client.get(reverse('posts:index'))
         response_group = self.authorized_client.get(reverse(
-            'posts:group_list', kwargs={'slug': 'test-slug-1'}))
+            'posts:group_list', kwargs={'slug': f'{self.group.slug}'}))
         response_profile = self.authorized_client.get(reverse(
             'posts:profile', kwargs={'username': 'auth'}))
         self.assertEqual(response_index.context['page_obj'][0].text,
-                         self.post_text)
+                         'Тестовый текст')
         self.assertEqual(response_index.context['page_obj'][0].group.title,
-                         self.post_group_1)
+                         'Тестовая группа 1')
         self.assertIsNot(response_index.context['page_obj'][0].group.title,
-                         self.post_group_2)
+                         'Тестовая группа 2')
         self.assertEqual(response_group.context['page_obj'][0].text,
-                         self.post_text)
+                         'Тестовый текст')
         self.assertEqual(response_profile.context['page_obj'][0].text,
-                         self.post_text)
+                         'Тестовый текст')
 
 
 class CacheTests(TestCase):
-    post_text = "Тестовый текст"
 
     @classmethod
     def setUpClass(cls):
