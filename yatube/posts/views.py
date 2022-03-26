@@ -42,12 +42,9 @@ def profile(request, username):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     post_count = posts.count()
-    if request.user.is_authenticated:
-        following = Follow.objects.filter(
-            user=request.user, author=author
-        ).exists()
-    else:
-        following = False
+    following = request.user.is_authenticated and (
+        Follow.objects.filter(user=request.user, author=author).exists()
+    )
     context = {
         'post_count': post_count,
         'posts': posts,
@@ -142,11 +139,10 @@ def follow_index(request):
 
 @login_required
 def profile_follow(request, username):
-    user = request.user
-    author = User.objects.get(username=username)
-    is_follower = Follow.objects.filter(user=user, author=author)
-    if user != author and not is_follower.exists():
-        Follow.objects.create(user=user, author=author)
+    author = get_object_or_404(User, username=username)
+    is_follower = Follow.objects.filter(user=request.user, author=author)
+    if request.user != author and not is_follower.exists():
+        Follow.objects.create(user=request.user, author=author)
     return redirect(reverse('posts:profile', args=[username]))
 
 

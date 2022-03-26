@@ -72,9 +72,11 @@ class PostPagesTests(TestCase):
                 reverse('posts:post_detail',
                         kwargs={'post_id': str(self.post_user.pk)}),
             'posts/profile.html':
-                reverse('posts:profile', kwargs={'username': 'auth'}),
+                reverse('posts:profile',
+                        kwargs={'username': f'{self.user.username}'}),
             'posts/group_list.html':
-                reverse('posts:group_list', kwargs={'slug': 'test-slug'}),
+                reverse('posts:group_list',
+                        kwargs={'slug': f'{self.group.slug}'}),
             'posts/index.html': reverse('posts:index'),
         }
         for template, reverse_name in templates_pages_names.items():
@@ -91,40 +93,37 @@ class PostPagesTests(TestCase):
     def test_home_page_show_correct_context(self):
         response = self.guest_client.get(reverse('posts:index'))
         first_object = response.context['page_obj'][0]
-        post_text_0 = first_object.text
-        post_author_0 = first_object.author.username
-        post_group_0 = first_object.group.title
-        post_image_0 = Post.objects.exists()
-        self.assertEqual(post_text_0, self.post_text)
-        self.assertEqual(post_author_0, self.post_author)
-        self.assertEqual(post_group_0, self.post_group)
-        self.assertTrue(post_image_0, 'posts/small.gif')
+        self.assertEqual(first_object.text, self.post_text)
+        self.assertEqual(first_object.author.username, self.post_author)
+        self.assertEqual(first_object.group.title, self.post_group)
+        self.assertTrue(Post.objects.exists(), 'posts/small.gif')
 
     def test_posts_group_list_correct_context(self):
         response = self.guest_client.get(
-            reverse('posts:group_list', kwargs={'slug': 'test-slug'}))
-        post_image_0 = Post.objects.exists()
+            reverse('posts:group_list',
+                    kwargs={'slug': f'{self.group.slug}'}))
         self.assertEqual(response.context.get('group').title,
                          self.post_group)
         self.assertEqual(response.context.get('group').description,
                          self.group_description)
-        self.assertTrue(post_image_0, 'posts/small.gif')
+        self.assertTrue(Post.objects.exists(), 'posts/small.gif')
 
     def test_profile_correct_context(self):
         response = self.guest_client.get(
-            reverse('posts:profile', kwargs={'username': 'auth'}))
-        post_image_0 = Post.objects.exists()
+            reverse('posts:profile',
+                    kwargs={'username': f'{self.user.username}'})
+        )
         self.assertEqual(response.context.get('author').username,
                          self.post_author)
-        self.assertTrue(post_image_0, 'posts/small.gif')
+        self.assertTrue(Post.objects.exists(), 'posts/small.gif')
 
     def test_post_detail_correct_context(self):
         response = self.authorized_client.get(
             reverse('posts:post_detail',
                     kwargs={'post_id': self.post_user.pk}))
-        post_image_0 = Post.objects.exists()
-        self.assertEqual(response.context.get('post').text, self.post_text)
-        self.assertTrue(post_image_0, 'posts/small.gif')
+        self.assertEqual(response.context.get('post').text,
+                         self.post_text)
+        self.assertTrue(Post.objects.exists(), 'posts/small.gif')
 
     def test_create_page_show_correct_context(self):
         response = self.authorized_client.get(
@@ -260,45 +259,47 @@ class CacheTests(TestCase):
         self.authorized_client.force_login(self.user)
 
     def test_cache_of_home_page(self):
-        post_exits = (self.guest_client.get(reverse
-                                            ("posts:index"))
-                      .content)
+        post_exits = self.guest_client.get(reverse("posts:index")).content
         self.post_user.delete()
-        post_deleted = (self.guest_client.get(reverse
-                                              ("posts:index"))
-                        .content)
+        post_deleted = self.guest_client.get(reverse("posts:index")).content
         self.assertEqual(post_exits, post_deleted)
         cache.clear()
-        cache_cleared = (self.guest_client.get(reverse
-                                               ("posts:index"))
-                         .content)
+        cache_cleared = self.guest_client.get(reverse("posts:index")).content
         self.assertNotEqual(post_exits, cache_cleared)
 
 
 class FollowTests(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user_follower = User.objects.create_user(username='follower')
+        cls.user_following = User.objects.create_user(username='following')
+        cls.post = Post.objects.create(
+            author=cls.user_following,
+            text='Тестовая запись для тестирования ленты'
+        )
+
     def setUp(self):
         self.client_auth_follower = Client()
         self.client_auth_following = Client()
-        self.user_follower = User.objects.create_user(username='follower')
-        self.user_following = User.objects.create_user(username='following')
-        self.post = Post.objects.create(
-            author=self.user_following,
-            text='Тестовая запись для тестирования ленты'
-        )
         self.client_auth_follower.force_login(self.user_follower)
         self.client_auth_following.force_login(self.user_following)
 
     def test_follow(self):
         self.client_auth_follower.get(
             reverse('posts:profile_follow',
-                    kwargs={'username': self.user_following.username}))
+                    kwargs={'username': self.user_following.username})
+        )
         self.assertEqual(Follow.objects.all().count(), 1)
 
     def test_unfollow(self):
         self.client_auth_follower.get(
             reverse('posts:profile_follow',
-                    kwargs={'username': self.user_following.username}))
+                    kwargs={'username': self.user_following.username})
+        )
         self.client_auth_follower.get(
             reverse('posts:profile_unfollow',
-                    kwargs={'username': self.user_following.username}))
+                    kwargs={'username': self.user_following.username})
+        )
         self.assertEqual(Follow.objects.all().count(), 0)

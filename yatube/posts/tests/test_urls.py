@@ -30,7 +30,7 @@ class PostURLTests(TestCase):
     def test_home_url_exists_at_desired_location_guest(self):
         templates_url_names = {
             'posts:index.html': '/',
-            'posts:group_list.html': '/group/test_slug/',
+            'posts:group_list.html': f'/group/{self.group.slug}/',
             'posts/profile.html': f'/profile/{self.user}/',
             'posts/post_detail.html': f'/posts/{self.post.id}/',
         }
@@ -61,7 +61,8 @@ class PostURLTests(TestCase):
         response_guest = self.guest_client.get(f'/posts/{self.post.id}/edit/',
                                                follow=True)
         self.assertRedirects(
-            response_guest, (reverse('users:login') + '?next=/posts/1/edit/')
+            response_guest,
+            (reverse('users:login') + f'?next=/posts/{self.post.id}/edit/')
         )
 
     def test_urls_uses_correct_template(self):
@@ -70,7 +71,7 @@ class PostURLTests(TestCase):
             'posts/index.html': '/',
             'about/author.html': '/about/author/',
             'about/tech.html': '/about/tech/',
-            'posts/group_list.html': '/group/test_slug/',
+            'posts/group_list.html': f'/group/{self.group.slug}/',
             'posts/create_post.html': '/create/',
             'posts/profile.html': f'/profile/{self.user}/',
             'posts/post_detail.html': f'/posts/{self.post.id}/',

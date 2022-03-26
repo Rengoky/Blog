@@ -24,13 +24,13 @@
         </li>
         {% endwith %}
         {% if user.is_authenticated %}
-        <li class="nav-item">
+        <li class="nav-item"> 
           <a class="nav-link" href="{% url 'posts:post_create' %}">Новая запись</a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item"> 
           <a class="nav-link link-light" href="{% url 'users:password_reset' %}">Изменить пароль</a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item"> 
           <a class="nav-link link-light" href="{% url 'users:logout' %}">Выйти</a>
         </li>
         <li>

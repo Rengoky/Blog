@@ -47,7 +47,6 @@ class Post(models.Model):
         related_name='posts',
         blank=True,
         null=True,
-        max_length=100,
         verbose_name="Группа",
         help_text="Выберите группу"
     )
